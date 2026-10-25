@@ -1,0 +1,312 @@
+
+<!DOCTYPE html>
+<html lang="en" translate="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="google" content="notranslate">
+<meta name="color-scheme" content="light">
+<title>First Friends 2: Spelling Adventure</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:14px;background:linear-gradient(135deg,#b9f4e8,#e6d4ff,#fff0b5);font-family:Arial,sans-serif;color:#30345f;text-align:center}
+.screen{display:none;max-width:620px;margin:10px auto;background:white;border:4px solid white;border-radius:28px;padding:20px 16px;box-shadow:0 8px 25px #51417a30}
+.active{display:block}
+h1{color:#7850d7;font-size:clamp(27px,6vw,38px)}
+h2{color:#ff795e}
+button{border:0;border-radius:14px;padding:13px 17px;margin:5px;background:#7954d8;color:white;font-weight:bold;font-size:16px;cursor:pointer}
+button:active{transform:scale(.97)}
+.green{background:#13a995}.orange{background:#ff875e}
+input{width:95%;max-width:360px;padding:14px;border:3px solid #d6c9ff;border-radius:14px;font-size:18px;text-align:center;margin:10px}
+.stats{display:flex;justify-content:space-around;gap:7px;flex-wrap:wrap;font-weight:bold}
+.stat{background:#f1ecff;border-radius:12px;padding:10px}
+#art{width:min(100%,350px);height:235px;margin:8px auto;display:block}
+#progress{height:12px;background:#eee8fb;border-radius:20px;overflow:hidden;margin:15px 0}
+#bar{height:100%;width:0;background:#15b99a;transition:width .3s}
+#feedback{min-height:30px;font-weight:bold;font-size:19px;margin:12px 0}
+.small{font-size:13px;color:#777596}
+footer{margin-top:20px;font-size:13px;font-weight:bold}
+</style>
+</head>
+<body>
+
+<section id="start" class="screen active">
+<h1>🎨 First Friends 2</h1>
+<h2>Spelling Adventure</h2>
+<svg viewBox="0 0 300 150" width="100%" height="150" aria-label="Cartoon school scene">
+<rect x="20" y="20" width="260" height="115" rx="25" fill="#d9f7ff"/>
+<rect x="80" y="49" width="140" height="77" rx="8" fill="#ffcf78" stroke="#8053c7" stroke-width="3"/>
+<path d="M65 51 L150 10 L235 51Z" fill="#ff887d" stroke="#8053c7" stroke-width="3"/>
+<rect x="105" y="68" width="30" height="28" fill="#9ee9ff" stroke="#8053c7" stroke-width="2"/>
+<rect x="165" y="68" width="30" height="28" fill="#9ee9ff" stroke="#8053c7" stroke-width="2"/>
+<rect x="135" y="96" width="30" height="30" fill="#a987e8"/>
+<circle cx="50" cy="110" r="17" fill="#ffccaa"/>
+<path d="M32 105 Q29 76 51 82 Q71 83 68 104Z" fill="#7b4b2e"/>
+<circle cx="45" cy="109" r="2.5"/><circle cx="57" cy="109" r="2.5"/>
+<path d="M45 116 Q51 122 58 116" fill="none" stroke="#a34d4d" stroke-width="2"/>
+<circle cx="250" cy="108" r="17" fill="#ffccaa"/>
+<path d="M232 102 Q230 79 250 81 Q270 80 269 102Z" fill="#5c3829"/>
+<circle cx="245" cy="108" r="2.5"/><circle cx="257" cy="108" r="2.5"/>
+<path d="M245 116 Q251 122 258 116" fill="none" stroke="#a34d4d" stroke-width="2"/>
+</svg>
+<p><b>Listen, Look and Spell!</b></p>
+<p>Enter Your Name</p>
+<input id="player" placeholder="Your Name" maxlength="24" autocomplete="off">
+<br><button onclick="startGame()">START GAME</button>
+<p class="small">5 Lives • 47 Words • Cartoon Pictures</p>
+<footer>Teacher: Ms.Ramezanzadeh</footer>
+</section>
+
+<section id="game" class="screen">
+<h1>Spelling Adventure</h1>
+<div class="stats">
+<div class="stat">👤 <span id="name"></span></div>
+<div class="stat">❤️ <span id="lives"></span></div>
+<div class="stat">⭐ <span id="score">0</span></div>
+</div>
+<div id="progress"><div id="bar"></div></div>
+<p id="counter"></p>
+<svg id="art" viewBox="0 0 320 230" role="img" aria-label="Cartoon vocabulary illustration"></svg>
+<h2>Listen and Spell!</h2>
+<button class="green" onclick="speak()">🔊 LISTEN</button>
+<p>Type the word you hear.</p>
+<input id="answer" placeholder="Type your answer" autocomplete="off" autocapitalize="none" spellcheck="false">
+<br><button onclick="check()">CHECK ANSWER</button>
+<button class="orange" onclick="skip()">SKIP WORD</button>
+<div id="feedback" aria-live="polite"></div>
+<footer>Teacher: Ms.Ramezanzadeh</footer>
+</section>
+
+<section id="over" class="screen">
+<h1 style="color:#e94c65">GAME OVER!</h1>
+<div id="sadArt"></div>
+<h2 id="overName"></h2>
+<p id="overScore"></p>
+<p>Keep Practicing!</p>
+<button onclick="replay()">PLAY AGAIN</button>
+</section>
+
+<section id="win" class="screen">
+<h1 style="color:#12a783">YOU WIN!</h1>
+<div id="winArt"></div>
+<h2 id="winner"></h2>
+<p>You spelled every word correctly!</p>
+<p id="result"></p>
+<button onclick="replay()">PLAY AGAIN</button>
+<footer>Teacher: Ms.Ramezanzadeh</footer>
+</section>
+
+<script>
+const data=[
+["Sunday","sun"],["Monday","calendar"],["Tuesday","calendar"],
+["Wednesday","calendar"],["Thursday","calendar"],["Friday","calendar"],
+["Saturday","party"],["classroom","school"],["music room","music"],
+["piano","piano"],["guitar","guitar"],["friend","child"],
+["playground","play"],["school bus","bus"],["seesaw","play"],
+["swing","play"],["sandbox","sand"],["teacher","teacher"],
+["cold","cold"],["sad","sad"],["happy","happy"],["tired","tired"],
+["shy","shy"],["hungry","hungry"],["scared","scared"],
+["thirsty","thirsty"],["hot","hot"],["sleepy","sleepy"],
+["sheep","sheep"],["shoes","shoes"],["fish","fish"],["ship","ship"],
+["shelf","shelf"],["read","read"],["write","write"],
+["throw","ball"],["run","run"],["catch","ball"],["sing","music"],
+["kick","ball"],["jump","jump"],["draw","draw"],["climb","climb"],
+["thumb","thumb"],["bath","bath"],["thick","book"],["thin","paper"]
+];
+
+let deck=[],index=0,lives=5,score=0,player="",locked=false;
+let missed=new Set();
+const $=id=>document.getElementById(id);
+
+function show(id){
+ document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));
+ $(id).classList.add("active");
+}
+function shuffle(a){
+ for(let i=a.length-1;i>0;i--){
+  let j=Math.floor(Math.random()*(i+1));
+  [a[i],a[j]]=[a[j],a[i]];
+ }
+ return a;
+}
+function startGame(){
+ player=$("player").value.trim();
+ if(!player){$("player").placeholder="Please Enter Your Name!";$("player").focus();return}
+ deck=shuffle([...data]);index=0;lives=5;score=0;locked=false;missed.clear();
+ $("name").textContent=player;
+ show("game");load();
+}
+function svgArt(type){
+ const head=`<rect width="320" height="230" rx="24" fill="#e7f9ff"/>
+ <circle cx="270" cy="32" r="20" fill="#ffe17a"/>
+ <path d="M0 190 Q80 170 150 193 T320 188 V230 H0Z" fill="#b8edbd"/>`;
+ const face=`<circle cx="160" cy="96" r="39" fill="#ffcca7" stroke="#a9654b" stroke-width="2"/>
+ <path d="M121 91 Q115 43 160 48 Q203 46 199 92 Q181 63 155 68 Q141 84 121 91Z" fill="#71462f"/>
+ <circle cx="146" cy="96" r="3" fill="#47372f"/><circle cx="174" cy="96" r="3" fill="#47372f"/>
+ <path d="M147 112 Q160 124 174 112" fill="none" stroke="#a64b54" stroke-width="3" stroke-linecap="round"/>`;
+ const body=`<path d="M125 137 Q160 120 195 137 L211 190 H109Z" fill="#8c72e8" stroke="#6244b3" stroke-width="2"/>
+ <path d="M130 184 L126 215 M190 184 L194 215" stroke="#ffcca7" stroke-width="13" stroke-linecap="round"/>`;
+ const kid=face+body;
+ const pictures={
+ sun:`<circle cx="160" cy="105" r="49" fill="#ffce55" stroke="#ff9e44" stroke-width="4"/>
+ <g stroke="#ffad42" stroke-width="7" stroke-linecap="round">
+ <path d="M160 35V22 M160 188V175 M90 105H76 M244 105H230 M110 55L99 44 M210 155L221 166 M210 55L221 44 M110 155L99 166"/></g>
+ <circle cx="143" cy="100" r="4" fill="#794d32"/><circle cx="177" cy="100" r="4" fill="#794d32"/>
+ <path d="M143 119 Q160 137 178 119" fill="none" stroke="#a64b54" stroke-width="4" stroke-linecap="round"/>`,
+ calendar:`<rect x="83" y="45" width="154" height="145" rx="14" fill="#fff" stroke="#8a69d7" stroke-width="5"/>
+ <path d="M84 62 Q84 45 101 45 H219 Q237 45 237 62 V80 H84Z" fill="#ff827b"/>
+ <path d="M120 35V59 M200 35V59" stroke="#7650ca" stroke-width="8" stroke-linecap="round"/>
+ <g fill="#a997e8"><rect x="104" y="99" width="24" height="22" rx="4"/><rect x="148" y="99" width="24" height="22" rx="4"/><rect x="192" y="99" width="24" height="22" rx="4"/><rect x="104" y="140" width="24" height="22" rx="4"/><rect x="148" y="140" width="24" height="22" rx="4"/></g>`,
+ school:`<path d="M48 90L160 25L272 90Z" fill="#ff8c7d" stroke="#7650ca" stroke-width="4"/>
+ <rect x="64" y="90" width="192" height="108" rx="8" fill="#ffd27e" stroke="#7650ca" stroke-width="4"/>
+ <rect x="139" y="137" width="42" height="61" fill="#9774dc"/>
+ <g fill="#9de7ff" stroke="#7650ca" stroke-width="3"><rect x="83" y="108" width="36" height="30"/><rect x="201" y="108" width="36" height="30"/></g>`,
+ bus:`<rect x="40" y="65" width="240" height="112" rx="18" fill="#ffd64f" stroke="#7752c8" stroke-width="5"/>
+ <path d="M55 82H263V126H55Z" fill="#a5e9ff"/>
+ <path d="M105 83V125 M157 83V125 M209 83V125" stroke="#7752c8" stroke-width="4"/>
+ <circle cx="91" cy="178" r="22" fill="#514c6b"/><circle cx="91" cy="178" r="10" fill="#c5d3ee"/>
+ <circle cx="232" cy="178" r="22" fill="#514c6b"/><circle cx="232" cy="178" r="10" fill="#c5d3ee"/>
+ <rect x="263" y="138" width="14" height="18" rx="4" fill="#ff806d"/>`,
+ sheep:`<g fill="#fff" stroke="#a5a6bf" stroke-width="3">
+ <circle cx="112" cy="107" r="30"/><circle cx="143" cy="79" r="32"/><circle cx="178" cy="81" r="32"/><circle cx="205" cy="108" r="30"/><circle cx="150" cy="115" r="35"/><circle cx="184" cy="118" r="31"/></g>
+ <ellipse cx="163" cy="120" rx="35" ry="40" fill="#ffcca7" stroke="#a9654b" stroke-width="2"/>
+ <ellipse cx="151" cy="116" rx="4" ry="5" fill="#463b48"/><ellipse cx="176" cy="116" rx="4" ry="5" fill="#463b48"/>
+ <ellipse cx="164" cy="130" rx="7" ry="5" fill="#f18d91"/>
+ <path d="M150 143 Q164 153 178 143" fill="none" stroke="#a64b54" stroke-width="3"/>
+ <path d="M136 157L132 193 M188 157L192 193" stroke="#f5f1eb" stroke-width="15" stroke-linecap="round"/>`,
+ fish:`<path d="M83 115 Q148 44 225 115 Q148 188 83 115Z" fill="#ff9c75" stroke="#d56d6d" stroke-width="4"/>
+ <path d="M88 115L43 76V154Z" fill="#8a79e5" stroke="#6950bd" stroke-width="4"/>
+ <circle cx="189" cy="106" r="7" fill="#493b59"/><circle cx="191" cy="104" r="2" fill="white"/>
+ <path d="M208 127 Q220 135 229 124" fill="none" stroke="#a54b54" stroke-width="3"/>
+ <path d="M145 83L166 115L144 147" fill="#ffcf54" stroke="#db9c39" stroke-width="3"/>`,
+ guitar:`<path d="M146 103L184 68L203 87L166 124Z" fill="#eab76d" stroke="#a96737" stroke-width="4"/>
+ <path d="M137 112 Q107 93 91 120 Q71 146 101 166 Q128 183 147 153 Q160 135 137 112Z" fill="#ff9b61" stroke="#a96737" stroke-width="4"/>
+ <circle cx="115" cy="139" r="13" fill="#60456b"/>
+ <path d="M159 100L201 60" stroke="#ffe8b4" stroke-width="4"/>
+ <path d="M165 103L207 63 M169 108L211 68" stroke="#80553b" stroke-width="1"/>`,
+ piano:`<rect x="65" y="64" width="190" height="106" rx="8" fill="#665477" stroke="#453b5b" stroke-width="4"/>
+ <rect x="77" y="76" width="166" height="80" fill="#fff"/>
+ <path d="M105 76V156 M133 76V156 M161 76V156 M189 76V156 M217 76V156" stroke="#665477" stroke-width="3"/>
+ <g fill="#38334b"><rect x="96" y="76" width="17" height="48" rx="3"/><rect x="124" y="76" width="17" height="48" rx="3"/><rect x="180" y="76" width="17" height="48" rx="3"/><rect x="208" y="76" width="17" height="48" rx="3"/></g>`,
+ play:`<path d="M70 170V85H102V170 M218 170V85H250V170" stroke="#7b5bc8" stroke-width="9" fill="none"/>
+ <path d="M78 88L160 32L242 88Z" fill="#ff927d" stroke="#7b5bc8" stroke-width="4"/>
+ <path d="M95 120H225" stroke="#ffbf4e" stroke-width="9" stroke-linecap="round"/>
+ <path d="M160 120V172" stroke="#7b5bc8" stroke-width="8"/>
+ <circle cx="160" cy="182" r="14" fill="#64d7c0"/>`,
+ child:kid,
+ teacher:kid,
+ music:`<g fill="#9c80e7"><path d="M120 55V145Q100 160 87 143Q77 124 105 117V55Z"/><path d="M170 40V137Q151 153 138 137Q128 118 155 109V40Z"/></g><path d="M120 55L200 38V56L120 73Z" fill="#ff877d"/><path d="M170 40L235 27V46L170 59Z" fill="#ffcf54"/>`,
+ sand:`<path d="M45 145L75 75H245L275 145Z" fill="#f6cf83" stroke="#dba954" stroke-width="4"/><path d="M45 145H275V185H45Z" fill="#e6a95e" stroke="#dba954" stroke-width="4"/><circle cx="120" cy="130" r="6" fill="#fff0b5"/><circle cx="180" cy="156" r="6" fill="#fff0b5"/>`,
+ cold:`<path d="M160 45V185 M95 80L225 150 M95 150L225 80" stroke="#69bce8" stroke-width="10" stroke-linecap="round"/><circle cx="160" cy="115" r="50" fill="#b7e9ff" stroke="#69bce8" stroke-width="4"/><path d="M140 105L151 110 M169 110L180 105" stroke="#4d8cba" stroke-width="4"/><path d="M145 129Q160 120 175 129" fill="none" stroke="#4d8cba" stroke-width="4"/>`,
+ sad:`<g transform="translate(0,5)">${face}<path d="M143 135Q160 112 178 135" fill="none" stroke="#a64b54" stroke-width="4"/><path d="M187 117Q199 134 186 144Q176 133 187 117Z" fill="#5bbef4"/></g>`,
+ happy:`${face}<path d="M142 110Q160 142 179 110" fill="none" stroke="#a64b54" stroke-width="5" stroke-linecap="round"/><circle cx="135" cy="109" r="7" fill="#ff9eaa"/><circle cx="185" cy="109" r="7" fill="#ff9eaa"/>`,
+ tired:`${kid}<path d="M205 45Q222 33 236 46 M214 64Q232 51 246 65" stroke="#8d75d7" stroke-width="5" fill="none" stroke-linecap="round"/>`,
+ shy:`${face}<circle cx="140" cy="109" r="8" fill="#ff9eaa"/><circle cx="180" cy="109" r="8" fill="#ff9eaa"/><path d="M150 121Q160 114 170 121" stroke="#a64b54" stroke-width="3" fill="none"/>`,
+ hungry:`<path d="M100 150Q160 180 220 150L210 185H110Z" fill="#ffcf54" stroke="#c68e38" stroke-width="3"/><circle cx="160" cy="125" r="28" fill="#ffcf54"/><path d="M160 99Q180 74 194 91Q193 109 160 115Z" fill="#67bd74"/><path d="M145 130Q160 148 175 130" fill="none" stroke="#a64b54" stroke-width="4"/>`,
+ scared:`${face}<path d="M140 89L150 94 M170 94L180 89" stroke="#473b4e" stroke-width="4"/><ellipse cx="160" cy="127" rx="10" ry="14" fill="#a64b54"/>`,
+ thirsty:`<path d="M112 72H208L195 183H125Z" fill="#9de6ff" stroke="#5caed4" stroke-width="4"/><path d="M120 130H201L195 183H125Z" fill="#51c6f2"/><path d="M160 48L143 74H176Z" fill="#5ac5f0"/>`,
+ hot:`<circle cx="160" cy="120" r="45" fill="#ff9d6b"/><path d="M140 101L151 108 M169 108L180 101" stroke="#8c5145" stroke-width="4"/><path d="M145 132Q160 123 175 132" fill="none" stroke="#8c5145" stroke-width="4"/><path d="M100 65Q88 50 103 37 M217 65Q230 50 215 37" fill="none" stroke="#ff9565" stroke-width="5" stroke-linecap="round"/>`,
+ sleepy:`${face}<path d="M142 108Q150 101 157 108 M166 108Q174 101 182 108" stroke="#473b4e" stroke-width="4" fill="none"/><text x="205" y="65" font-size="30" fill="#8d75d7" font-weight="bold">Z</text><text x="230" y="45" font-size="22" fill="#8d75d7" font-weight="bold">z</text>`,
+ shoes:`<path d="M65 140Q105 135 124 94L151 114Q160 145 198 149Q225 152 230 176H65Z" fill="#ff8c7c" stroke="#bb5e68" stroke-width="4"/><path d="M65 174H231" stroke="#fff" stroke-width="8" stroke-linecap="round"/><path d="M124 123L152 132 M115 133L144 142" stroke="#fff" stroke-width="4"/>`,
+ ship:`<path d="M54 146H268L228 190H100Z" fill="#ff8a7c" stroke="#a44e67" stroke-width="4"/><path d="M155 55V143H93Z" fill="#fff" stroke="#7c65d4" stroke-width="3"/><path d="M166 78V143H225Z" fill="#ffcf54" stroke="#7c65d4" stroke-width="3"/><path d="M145 45H178" stroke="#7c65d4" stroke-width="6"/>`,
+ shelf:`<rect x="62" y="47" width="196" height="150" rx="8" fill="#e6b56c" stroke="#a46c3e" stroke-width="5"/><path d="M62 112H258 M62 161H258" stroke="#a46c3e" stroke-width="7"/><g fill="#8d79df"><rect x="80" y="65" width="25" height="45"/><rect x="110" y="58" width="22" height="52"/><rect x="174" y="70" width="27" height="40"/></g><g fill="#ff897c"><rect x="139" y="78" width="27" height="32"/><rect x="207" y="64" width="30" height="46"/></g>`,
+ read:`<path d="M60 75Q110 58 160 86V182Q110 154 60 172Z" fill="#fff" stroke="#7d62d0" stroke-width="4"/><path d="M260 75Q210 58 160 86V182Q210 154 260 172Z" fill="#fff" stroke="#7d62d0" stroke-width="4"/><path d="M78 95L140 105 M78 115L140 125 M180 105L242 95 M180 125L242 115" stroke="#9d8be3" stroke-width="4"/>`,
+ write:`<path d="M85 175L207 53L240 85L118 207Z" fill="#ffcf54" stroke="#b98a3e" stroke-width="4"/><path d="M207 53L224 36Q230 30 237 37L248 48Q255 55 248 62L240 85Z" fill="#ff9c7d"/><path d="M85 175L75 214L118 207Z" fill="#f6d8b1"/>`,
+ ball:`<circle cx="160" cy="115" r="65" fill="#ffcf54" stroke="#dba63e" stroke-width="4"/><path d="M160 50L185 83L174 112L143 112L135 82Z M95 96L125 87L143 112L133 143L101 151 M225 96L195 87L174 112L184 143L216 151 M133 143L160 180L184 143" fill="none" stroke="#fff" stroke-width="6"/>`,
+ run:`${kid}<path d="M130 146L92 170L65 160 M190 145L220 167L249 154" stroke="#ffcca7" stroke-width="15" stroke-linecap="round"/><path d="M118 85L92 75 M204 99L228 91" stroke="#ff9c7d" stroke-width="5" stroke-linecap="round"/>`,
+ jump:`${kid}<path d="M130 148L95 110 M190 148L225 110 M130 181L108 209 M190 181L212 209" stroke="#ffcca7" stroke-width="14" stroke-linecap="round"/><path d="M85 67L72 53 M230 67L245 53" stroke="#ffcf54" stroke-width="6"/>`,
+ draw:`<rect x="75" y="45" width="170" height="145" rx="10" fill="#fff" stroke="#8c75db" stroke-width="4"/><path d="M100 140L133 87L165 140Z" fill="#ff8d7d"/><circle cx="195" cy="91" r="20" fill="#ffcf54"/><path d="M185 156Q207 135 226 156" fill="none" stroke="#67cdb6" stroke-width="7"/>`,
+ climb:`<path d="M190 25L190 210 M150 65L230 65 M150 105L230 105 M150 145L230 145 M150 185L230 185" stroke="#a77548" stroke-width="9"/><circle cx="157" cy="82" r="19" fill="#ffcca7"/><path d="M155 102L178 139L152 163 M177 139L204 128 M174 138L160 105 M153 163L133 190 M153 163L176 188" stroke="#8a6ad8" stroke-width="12" stroke-linecap="round"/>`,
+ thumb:`<path d="M127 185V125Q127 112 140 112H155V73Q155 55 171 57Q185 59 182 77V108H210Q226 108 223 126L211 177Q207 191 191 191Z" fill="#ffcca7" stroke="#b77762" stroke-width="4"/>`,
+ bath:`<path d="M70 126H250L232 184H90Z" fill="#9de8ff" stroke="#639fc8" stroke-width="5"/><path d="M58 126H262" stroke="#639fc8" stroke-width="9" stroke-linecap="round"/><circle cx="120" cy="105" r="12" fill="#bcefff"/><circle cx="170" cy="94" r="9" fill="#bcefff"/><circle cx="210" cy="105" r="14" fill="#bcefff"/>`,
+ book:`<rect x="68" y="52" width="184" height="143" rx="8" fill="#ff8a7d" stroke="#9d5c77" stroke-width="4"/><path d="M160 53V195" stroke="#fff0c4" stroke-width="6"/><path d="M90 84H139 M90 105H139 M181 84H228 M181 105H228" stroke="#fff0c4" stroke-width="5"/>`,
+ paper:`<path d="M90 34H198L235 71V198H90Z" fill="#fff" stroke="#9a87d9" stroke-width="4"/><path d="M198 34V71H235" fill="#e4ddff" stroke="#9a87d9" stroke-width="4"/><path d="M113 99H211 M113 125H211 M113 151H211 M113 177H190" stroke="#a7b7e9" stroke-width="4"/>`
+ };
+ return `<rect width="320" height="230" rx="24" fill="#e7f9ff"/>${pictures[type]||kid}`;
+}
+function load(){
+ if(lives<=0){endGame();return}
+ if(index>=deck.length){winGame();return}
+ locked=false;
+ const [word,pic]=deck[index];
+ $("art").innerHTML=svgArt(pic);
+ $("counter").textContent=`Word ${index+1} of ${deck.length}`;
+ $("lives").textContent="❤️".repeat(lives)+"🤍".repeat(5-lives);
+ $("score").textContent=score;
+ $("bar").style.width=(index/deck.length*100)+"%";
+ $("answer").value="";
+ $("answer").disabled=false;
+ $("feedback").textContent="";
+ $("answer").focus();
+ setTimeout(speak,400);
+}
+function speak(){
+ if(!("speechSynthesis" in window))return;
+ speechSynthesis.cancel();
+ const u=new SpeechSynthesisUtterance(deck[index][0]);
+ u.lang="en-GB";u.rate=.82;u.pitch=1.05;
+ speechSynthesis.speak(u);
+}
+function sound(ok){
+ try{
+ const c=new(window.AudioContext||window.webkitAudioContext)();
+ const o=c.createOscillator(),g=c.createGain();
+ o.connect(g);g.connect(c.destination);
+ o.frequency.value=ok?880:220;
+ g.gain.value=.13;o.start();o.stop(c.currentTime+.2);
+ o.onended=()=>c.close();
+ }catch(e){}
+}
+function check(){
+ if(locked||lives<=0)return;
+ const val=$("answer").value.trim().toLowerCase();
+ if(!val){$("feedback").textContent="Please Type Your Answer!";return}
+ if(val===deck[index][0].toLowerCase()){
+  locked=true;score+=10;sound(true);
+  $("feedback").textContent="Excellent! Correct Answer!";
+  $("feedback").style.color="#119b77";
+  $("answer").disabled=true;
+  $("bar").style.width=((index+1)/deck.length*100)+"%";
+  setTimeout(()=>{index++;load()},900);
+ }else{
+  lives--;missed.add(deck[index][0]);sound(false);
+  $("lives").textContent="❤️".repeat(lives)+"🤍".repeat(5-lives);
+  $("feedback").textContent=lives===0?"No Lives Left!":"Try Again!";
+  $("feedback").style.color="#e44e4e";
+  if(lives===0){locked=true;$("answer").disabled=true;setTimeout(endGame,500)}
+  else $("answer").select();
+ }
+}
+function skip(){
+ if(locked||lives<=0)return;
+ lives--;missed.add(deck[index][0]);sound(false);
+ $("lives").textContent="❤️".repeat(lives)+"🤍".repeat(5-lives);
+ if(lives===0){locked=true;$("answer").disabled=true;$("feedback").textContent="No Lives Left!";setTimeout(endGame,500);return}
+ locked=true;$("feedback").textContent="Word Skipped!";
+ setTimeout(()=>{index++;load()},650);
+}
+function endGame(){
+ speechSynthesis?.cancel();
+ $("overName").textContent=player;
+ $("overScore").textContent=`Your Score: ${score}`;
+ $("sadArt").innerHTML=svgArt("sad");
+ show("over");
+}
+function winGame(){
+ speechSynthesis?.cancel();
+ $("winner").textContent=`Well Done, ${player}!`;
+ $("result").textContent=`Score: ${score} • Lives Remaining: ${lives}`;
+ $("winArt").innerHTML=svgArt("happy");
+ $("bar").style.width="100%";
+ show("win");
+}
+function replay(){
+ speechSynthesis?.cancel();
+ $("player").value=player;
+ show("start");
+}
+$("player").addEventListener("keydown",e=>{if(e.key==="Enter")startGame()});
+$("answer").addEventListener("keydown",e=>{if(e.key==="Enter")check()});
+</script>
+</body>
+</html>
