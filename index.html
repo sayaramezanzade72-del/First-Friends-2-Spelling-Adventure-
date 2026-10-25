@@ -1,0 +1,400 @@
+
+<!DOCTYPE html>
+<html lang="en" translate="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="google" content="notranslate">
+<title>First Friends 2 - Picture Spelling Game</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#eaf6ff;color:#273858;font-family:Arial,sans-serif;text-align:center}
+.screen{display:none;min-height:100vh;padding:16px;align-items:center;justify-content:center}
+.screen.active{display:flex}
+.panel{width:min(720px,100%);background:white;border-radius:25px;padding:20px;box-shadow:0 6px 0 #c9e0f3}
+h1{color:#3869c7;font-size:clamp(27px,6vw,40px)}
+h2{color:#3869c7}
+button,input{font:inherit}
+button{border:0;border-radius:13px;padding:12px 17px;font-weight:bold;cursor:pointer}
+input{width:min(340px,100%);padding:13px;border:2px solid #b6d0ee;border-radius:12px;text-align:center;margin:10px 0}
+.primary{background:#ffd04d;color:#493b11}
+.blue{background:#e2efff;color:#28558f}
+.stats{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-weight:bold}
+.progress{height:11px;background:#e8edf5;border-radius:10px;overflow:hidden;margin:13px 0}
+#bar{height:100%;width:0;background:#48c58c}
+#picture{height:230px;width:min(300px,85vw);margin:10px auto;display:flex;align-items:center;justify-content:center}
+#picture svg{width:100%;height:100%}
+#prompt{font-size:20px;font-weight:bold;margin:15px 0}
+#feedback{min-height:28px;font-weight:bold;margin:10px}
+#options{display:flex;flex-wrap:wrap;justify-content:center;gap:9px}
+.option{background:#e9f2ff;color:#294e86}
+#matches{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.matchcol{display:grid;gap:8px}
+.matchword,.matchpic{min-height:86px;background:#f0f7ff;border:3px solid #d1e2f4;border-radius:13px;display:flex;align-items:center;justify-content:center;padding:6px}
+.matchword{font-size:15px}
+.matchpic{flex-direction:column}
+.matchpic svg{width:95px;height:70px}
+.selected{outline:4px solid #ffd04d}
+.done{background:#d9f8e5!important;border-color:#45b97f!important}
+footer{margin-top:18px;font-size:13px;color:#73809a}
+@media(max-width:400px){.panel{padding:13px}.matchpic svg{width:76px}.matchword{font-size:13px}}
+</style>
+</head>
+<body>
+
+<section id="start" class="screen active">
+ <div class="panel">
+  <div id="cover" style="height:140px"></div>
+  <h1>Picture Spelling Adventure!</h1>
+  <h2>First Friends 2</h2>
+  <p>Listen, spell and match!</p>
+  <input id="name" maxlength="25" placeholder="Enter your name">
+  <br><button class="primary" onclick="startGame()">START GAME</button>
+  <footer>Teacher: Ms.Ramezanzadeh</footer>
+ </div>
+</section>
+
+<section id="game" class="screen">
+ <div class="panel">
+  <div class="stats">
+   <span id="player"></span>
+   <span id="stage"></span>
+   <span id="lives">❤️❤️❤️❤️❤️</span>
+  </div>
+  <div class="progress"><div id="bar"></div></div>
+  <h2 id="stageTitle"></h2>
+  <div id="picture"></div>
+  <div id="prompt"></div>
+  <div id="answerArea"></div>
+  <div id="feedback" aria-live="polite"></div>
+  <div id="options"></div>
+  <button id="listen" class="blue" onclick="listenWord()">🔊 LISTEN</button>
+  <footer>Teacher: Ms.Ramezanzadeh</footer>
+ </div>
+</section>
+
+<section id="end" class="screen">
+ <div class="panel">
+  <div style="font-size:65px">💛</div>
+  <h1>GAME OVER!</h1>
+  <p>Keep practicing and try again!</p>
+  <button class="primary" onclick="resetGame()">PLAY AGAIN</button>
+ </div>
+</section>
+
+<section id="win" class="screen">
+ <div class="panel">
+  <div style="font-size:65px">🏆</div>
+  <h1>YOU DID IT!</h1>
+  <p id="winText"></p>
+  <button class="primary" onclick="resetGame()">PLAY AGAIN</button>
+ </div>
+</section>
+
+<script>
+/* Vocabulary from First Friends 2 */
+const groups=[
+[
+["Sunday","day"],["Monday","day"],["Tuesday","day"],
+["Wednesday","day"],["Thursday","day"],["Friday","day"],
+["Saturday","day"],["classroom","classroom"],["music room","room"],
+["piano","piano"],["guitar","guitar"],["friend","friend"]
+],
+[
+["playground","playground"],["school bus","bus"],["seesaw","seesaw"],
+["swing","swing"],["sandbox","sandbox"],["teacher","teacher"],
+["cold","cold"],["sad","sad"],["happy","happy"],
+["tired","tired"],["shy","shy"],["hungry","hungry"]
+],
+[
+["scared","scared"],["thirsty","thirsty"],["hot","hot"],
+["sleepy","sleepy"],["sheep","sheep"],["shoes","shoes"],
+["fish","fish"],["ship","ship"],["shelf","shelf"],
+["read","read"],["write","write"],["throw","throw"]
+],
+[
+["run","run"],["catch","catch"],["sing","sing"],["kick","kick"],
+["jump","jump"],["draw","draw"],["climb","climb"],
+["thumb","thumb"],["bath","bath"],["thick","thick"],["thin","thin"]
+]
+].map(g=>g.map(([word,type])=>({word,type})));
+
+let playerName="Player",lives=5,stageIndex=0,index=0;
+let deck=[],current=null,locked=false,timer=null;
+let selected=null,matched=new Set(),matchSet=[];
+
+const $=id=>document.getElementById(id);
+function shuffle(a){
+ a=[...a];
+ for(let i=a.length-1;i>0;i--){
+  const j=Math.floor(Math.random()*(i+1));
+  [a[i],a[j]]=[a[j],a[i]];
+ }
+ return a;
+}
+function escapeHTML(s){
+ return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function screen(id){
+ document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));
+ $(id).classList.add("active");
+}
+
+/* Inline cartoons: no external image files required. */
+function art(type){
+ let s='',extra='';
+ const head='<circle cx="110" cy="45" r="22" fill="#f4c49f" stroke="#9b6849" stroke-width="2"/><path d="M88 43 Q82 14 110 18 Q139 14 133 44 L126 30 Q107 39 92 29Z" fill="#70462f"/><circle cx="102" cy="46" r="2.5"/><circle cx="118" cy="46" r="2.5"/><path d="M102 56 Q110 63 118 56" stroke="#a44f45" stroke-width="2" fill="none"/>';
+ const body=head+'<rect x="87" y="67" width="46" height="44" rx="10" fill="#559ce0"/><path d="M90 109 L80 148 M130 109 L140 148 M88 77 L65 103 M132 77 L155 103" stroke="#559ce0" stroke-width="9" stroke-linecap="round"/>';
+ const ground='<ellipse cx="110" cy="158" rx="82" ry="9" fill="#d8edcc"/>';
+ switch(type){
+ case "day":
+  s='<rect x="22" y="32" width="176" height="112" rx="16" fill="#fff0b4" stroke="#efc24e" stroke-width="4"/><circle cx="172" cy="48" r="15" fill="#ffd04d"/><text x="110" y="102" font-size="23" font-weight="bold" text-anchor="middle" fill="#3869c7">DAY</text>';
+  break;
+ case "classroom":case "room":
+  s='<rect x="26" y="20" width="168" height="135" rx="7" fill="#ffe5a8" stroke="#c49a5b" stroke-width="5"/><rect x="44" y="35" width="132" height="48" fill="#64b77d"/><text x="110" y="64" text-anchor="middle" font-size="17" fill="white">HELLO!</text><rect x="44" y="96" width="48" height="38" fill="#8acdf0"/><rect x="110" y="96" width="48" height="38" fill="#8acdf0"/>';
+  break;
+ case "piano":
+  s='<rect x="25" y="55" width="170" height="80" rx="7" fill="#282e3c"/>';
+  for(let i=0;i<10;i++)s+='<rect x="'+(32+i*16)+'" y="62" width="14" height="53" fill="white" stroke="#555"/>';
+  for(let i=0;i<7;i++)s+='<rect x="'+(42+i*23)+'" y="62" width="10" height="31" fill="#222"/>';
+  s+='<path d="M50 135 V155 M170 135 V155" stroke="#80563b" stroke-width="8"/>';
+  break;
+ case "guitar":
+  s='<path d="M96 91 L147 31 L161 44 L108 104" fill="#ba773d" stroke="#81502c" stroke-width="3"/><ellipse cx="83" cy="111" rx="31" ry="35" fill="#df9a4d" stroke="#81502c" stroke-width="4"/><circle cx="83" cy="111" r="10" fill="#81502c"/><path d="M99 94 L151 39" stroke="#fff0c5" stroke-width="2"/>';
+  break;
+ case "bus":
+  s='<rect x="20" y="43" width="180" height="89" rx="14" fill="#ffd33d" stroke="#b18b24" stroke-width="4"/>';
+  for(let i=0;i<4;i++)s+='<rect x="'+(32+i*39)+'" y="54" width="32" height="32" rx="3" fill="#b8eaff"/>';
+  s+='<circle cx="60" cy="134" r="14" fill="#343b49"/><circle cx="161" cy="134" r="14" fill="#343b49"/><circle cx="60" cy="134" r="6" fill="#ddd"/><circle cx="161" cy="134" r="6" fill="#ddd"/>';
+  break;
+ case "swing":
+  s='<path d="M43 155 L76 18 M177 155 L144 18 M76 18 H144" stroke="#98623b" stroke-width="8" stroke-linecap="round"/><path d="M91 37 V113 M129 37 V113" stroke="#5294d0" stroke-width="4"/><rect x="80" y="108" width="60" height="12" rx="3" fill="#e9a34d" stroke="#98623b" stroke-width="3"/>';
+  break;
+ case "seesaw":
+  s='<path d="M110 83 L78 145 H142Z" fill="#80b8e9" stroke="#3867a6" stroke-width="3"/><rect x="22" y="69" width="176" height="13" rx="4" fill="#f4bd45" stroke="#a97926" stroke-width="3"/><circle cx="48" cy="57" r="13" fill="#f3c29c"/><circle cx="174" cy="100" r="13" fill="#f3c29c"/>';
+  break;
+ case "sandbox":
+  s='<rect x="29" y="49" width="162" height="93" rx="8" fill="#e5b976" stroke="#986d3a" stroke-width="8"/><path d="M40 77 Q80 66 112 82 T181 76 M40 113 Q80 100 112 116 T181 109" fill="none" stroke="#ffdfa3" stroke-width="5"/>';
+  break;
+ case "playground":
+  s='<path d="M30 151 V39 M190 151 V39 M30 44 H190" stroke="#97633d" stroke-width="7"/><path d="M67 45 V96 M101 45 V96" stroke="#4d9de0" stroke-width="4"/><rect x="57" y="93" width="54" height="9" fill="#f4c047"/><path d="M135 44 L150 97 H177 L190 44" fill="#8ac8ed" stroke="#4c91b9" stroke-width="4"/>';
+  break;
+ case "sheep":
+  s='<g fill="white" stroke="#c1cdd5" stroke-width="3"><circle cx="69" cy="83" r="23"/><circle cx="93" cy="63" r="25"/><circle cx="120" cy="65" r="25"/><circle cx="145" cy="84" r="23"/><circle cx="100" cy="94" r="27"/></g><ellipse cx="157" cy="90" rx="20" ry="17" fill="#f1c6a5"/><circle cx="163" cy="86" r="2.5"/><path d="M145 105 L141 137 M166 105 L170 137" stroke="#80563e" stroke-width="7"/>';
+  break;
+ case "fish":
+  s='<ellipse cx="105" cy="88" rx="55" ry="34" fill="#59bee7" stroke="#2879a5" stroke-width="3"/><path d="M52 88 L20 61 L20 115Z" fill="#f3ba45" stroke="#2879a5" stroke-width="3"/><circle cx="135" cy="80" r="5" fill="#26394d"/><path d="M78 70 Q93 88 78 105" stroke="#dcf5ff" stroke-width="4" fill="none"/><circle cx="174" cy="39" r="7" fill="#a4e5f5"/>';
+  break;
+ case "ship":
+  s='<path d="M24 105 H196 L164 143 H59Z" fill="#ed6d67" stroke="#a74743" stroke-width="3"/><path d="M108 26 V105" stroke="#80563e" stroke-width="5"/><path d="M102 35 L59 92 H102Z" fill="#fff3cf" stroke="#c8ad72" stroke-width="2"/><path d="M114 44 L159 93 H114Z" fill="#7fc4ed" stroke="#4e8db5" stroke-width="2"/><path d="M30 153 Q60 143 90 153 T150 153 T210 153" fill="none" stroke="#4db7e5" stroke-width="5"/>';
+  break;
+ case "shoes":
+  s='<path d="M25 103 Q54 102 65 63 L93 76 Q97 104 129 111 L183 119 Q199 122 191 139 H32 Q21 127 25 103Z" fill="#ed6675" stroke="#a33b51" stroke-width="4"/><path d="M75 82 L100 95 M68 94 L92 105" stroke="white" stroke-width="4"/>';
+  break;
+ case "shelf":
+  s='<rect x="42" y="22" width="136" height="132" fill="#be844f" stroke="#84562f" stroke-width="5"/><path d="M43 66 H177 M43 109 H177" stroke="#84562f" stroke-width="6"/>';
+  ["#559ce0","#ed7a67","#efc84d","#7bc98b","#a68ce3","#7bc98b","#ed7a67"].forEach((c,i)=>s+='<rect x="'+(52+(i%4)*32)+'" y="'+(30+Math.floor(i/4)*43)+'" width="25" height="31" rx="2" fill="'+c+'"/>');
+  break;
+ case "thumb":
+  s='<path d="M82 149 V91 Q84 77 97 83 L101 91 L102 52 Q104 36 117 41 Q125 44 122 56 L120 84 L129 68 Q137 58 144 65 Q149 70 143 80 L138 93 L146 83 Q157 77 161 87 L153 112 Q146 144 124 150Z" fill="#f1c39e" stroke="#a87552" stroke-width="4"/>';
+  break;
+ case "bath":
+  s='<path d="M30 90 H190 L175 135 Q110 157 45 135Z" fill="#9eddf5" stroke="#4a9bbd" stroke-width="4"/><path d="M35 91 V67 Q35 53 51 53" fill="none" stroke="#4a9bbd" stroke-width="5"/><circle cx="73" cy="65" r="7" fill="#d5f6ff"/><circle cx="91" cy="47" r="5" fill="#d5f6ff"/>';
+  break;
+ case "thick":case "thin":
+  s='<rect x="40" y="48" width="'+(type==="thick"?140:32)+'" height="91" rx="5" fill="#ed7a67" stroke="#a94942" stroke-width="4"/><path d="M46 62 H'+(type==="thick"?174:65)+'" stroke="#ffd2a8" stroke-width="4"/>';
+  break;
+ case "sad":case "happy":case "cold":case "hot":case "tired":case "shy":case "hungry":case "scared":case "thirsty":case "sleepy":
+  s=body;
+  if(type==="happy")s+='<path d="M101 56 Q110 68 119 56" fill="none" stroke="#a94f45" stroke-width="3"/>';
+  if(type==="sad")s+='<path d="M101 61 Q110 50 119 61" fill="none" stroke="#a94f45" stroke-width="3"/><path d="M136 49 Q146 58 137 67" fill="#65c8f3"/>';
+  if(type==="cold")s+='<path d="M45 35 L55 45 L45 55 M52 45 H66 M59 35 L59 55" stroke="#4b9fd9" stroke-width="3"/>';
+  if(type==="hot")s+='<path d="M50 32 Q40 43 50 53 M63 32 Q53 43 63 53" fill="none" stroke="#e88c43" stroke-width="3"/>';
+  if(type==="thirsty")s+='<path d="M154 87 H174 L171 123 Q162 130 157 123Z" fill="#6cc7ef" stroke="#3b88b6" stroke-width="2"/>';
+  if(type==="hungry")s+='<path d="M148 100 Q160 85 174 100 Q160 117 148 100Z" fill="#f3bd47" stroke="#bc8731" stroke-width="2"/>';
+  if(type==="sleepy")s+='<text x="152" y="42" font-size="22" fill="#7b77cc">Z</text><text x="174" y="25" font-size="16" fill="#7b77cc">z</text>';
+  break;
+ case "read":
+  s=body+'<rect x="72" y="91" width="76" height="39" rx="4" fill="#f8e6ad" stroke="#bc9348" stroke-width="3"/><path d="M110 93 V127" stroke="#bc9348" stroke-width="2"/>';
+  break;
+ case "write":
+  s=body+'<path d="M136 98 L165 128" stroke="#f5c34a" stroke-width="7" stroke-linecap="round"/>';
+  break;
+ case "sing":
+  s=body+'<circle cx="166" cy="45" r="10" fill="#ed6b71"/><path d="M176 43 V22 Q189 23 187 34" stroke="#ed6b71" stroke-width="4" fill="none"/>';
+  break;
+ case "throw":case "catch":case "kick":
+  s=body+'<circle cx="171" cy="'+(type==="kick"?130:82)+'" r="13" fill="#ed6a62"/>';
+  if(type==="kick")s+='<path d="M130 110 L155 125" stroke="#315b91" stroke-width="9"/>';
+  break;
+ case "run":
+  s=body+'<path d="M80 120 L52 134 M135 84 L159 67 M83 148 L56 157 M138 145 L166 154" stroke="#315b91" stroke-width="7" stroke-linecap="round"/>';
+  break;
+ case "jump":
+  s=body+'<path d="M90 110 L67 132 M130 110 L153 132" stroke="#315b91" stroke-width="9"/><path d="M45 45 L55 36 M170 42 L180 32 M105 10 V2" stroke="#f4b83f" stroke-width="4"/>';
+  break;
+ case "climb":
+  s='<path d="M48 157 L83 20 M172 157 L137 20" stroke="#98633e" stroke-width="7"/><path d="M61 120 H159 M68 90 H152 M76 60 H144" stroke="#98633e" stroke-width="5"/>'+body;
+  break;
+ case "draw":
+  s=body+'<rect x="145" y="92" width="42" height="47" fill="#fff3c9" stroke="#c9a15b" stroke-width="3"/><path d="M152 125 L164 104 L179 126" fill="none" stroke="#ed7771" stroke-width="3"/>';
+  break;
+ default:
+  s=body;
+ }
+ return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 180" role="img" aria-label="'+escapeHTML(type)+'">'+ground+s+'</svg>';
+}
+
+function startGame(){
+ playerName=$("name").value.trim()||"Player";
+ lives=5;stageIndex=0;
+ $("player").textContent=playerName;
+ screen("game");
+ startStage();
+}
+function startStage(){
+ if(lives<=0){endGame();return}
+ if(stageIndex>=4){winGame();return}
+ index=0;deck=shuffle(groups[stageIndex]);
+ $("stage").textContent="Stage "+(stageIndex+1)+" / 4";
+ $("stageTitle").textContent=[
+ "LISTEN AND SPELL","COMPLETE THE WORD",
+ "LOOK AND SPELL","MATCH WORDS AND PICTURES"
+ ][stageIndex];
+ $("bar").style.width="0%";
+ nextQuestion();
+}
+function nextQuestion(){
+ clearTimeout(timer);
+ if(lives<=0){endGame();return}
+ if(index>=deck.length){stageIndex++;startStage();return}
+ current=deck[index];locked=false;selected=null;
+ $("feedback").textContent="";
+ $("options").innerHTML="";
+ $("answerArea").innerHTML="";
+ $("picture").innerHTML="";
+ $("listen").style.display=stageIndex===0?"inline-block":"none";
+ $("bar").style.width=(index/deck.length*100)+"%";
+ if(stageIndex===0){
+  $("prompt").textContent="Listen and write the word.";
+  $("answerArea").innerHTML='<input id="answer" placeholder="Type the word" autocomplete="off"><br><button class="primary" onclick="checkAnswer()">CHECK</button>';
+  $("answer").addEventListener("keydown",e=>{if(e.key==="Enter")checkAnswer()});
+  setTimeout(listenWord,350);
+ }else if(stageIndex===1){
+  $("prompt").textContent="Complete the word. Type the whole word.";
+  $("picture").innerHTML='<div style="font-size:37px;color:#3869c7;font-weight:bold;letter-spacing:4px">'+makeMask(current.word)+'</div>';
+  $("answerArea").innerHTML='<input id="answer" placeholder="Write the complete word" autocomplete="off"><br><button class="primary" onclick="checkAnswer()">CHECK</button>';
+  $("answer").addEventListener("keydown",e=>{if(e.key==="Enter")checkAnswer()});
+ }else if(stageIndex===2){
+  $("prompt").textContent="Look at the picture and spell the word.";
+  $("picture").innerHTML=art(current.type);
+  $("answerArea").innerHTML='<input id="answer" placeholder="What is it?" autocomplete="off"><br><button class="primary" onclick="checkAnswer()">CHECK</button>';
+  $("answer").addEventListener("keydown",e=>{if(e.key==="Enter")checkAnswer()});
+ }else{
+  renderMatch();
+ }
+}
+function makeMask(word){
+ let a=[...word],pos=[];
+ a.forEach((c,i)=>{if(/[a-z]/i.test(c))pos.push(i)});
+ shuffle(pos).slice(0,Math.max(1,Math.ceil(pos.length*.4))).forEach(i=>a[i]="_");
+ return a.join(" ");
+}
+function listenWord(){
+ if(!current||!("speechSynthesis" in window))return;
+ speechSynthesis.cancel();
+ const u=new SpeechSynthesisUtterance(current.word);
+ u.lang="en-GB";u.rate=.82;speechSynthesis.speak(u);
+}
+function checkAnswer(){
+ if(locked)return;
+ const input=$("answer");
+ if(!input)return;
+ if(input.value.trim().toLowerCase().replace(/\s+/g," ")===current.word.toLowerCase()){
+  locked=true;
+  $("feedback").textContent="Excellent! ✓";
+  $("feedback").style.color="#15975b";
+  tone(true);
+  timer=setTimeout(()=>{index++;nextQuestion()},650);
+ }else{
+  loseLife();
+  if(lives>0){input.value="";input.focus()}
+ }
+}
+function loseLife(){
+ lives--;
+ $("lives").textContent="❤️".repeat(lives)+"🖤".repeat(5-lives);
+ $("feedback").textContent=lives?"Try again!":"Game over!";
+ $("feedback").style.color="#d64a4a";
+ tone(false);
+ if(lives<=0)timer=setTimeout(endGame,500);
+}
+function tone(ok){
+ try{
+  const C=window.AudioContext||window.webkitAudioContext;
+  if(!C)return;
+  const c=new C(),o=c.createOscillator(),g=c.createGain();
+  o.connect(g);g.connect(c.destination);
+  o.frequency.value=ok?660:220;g.gain.value=.12;
+  o.start();o.stop(c.currentTime+.18);
+  o.onended=()=>c.close();
+ }catch(e){}
+}
+function renderMatch(){
+ $("prompt").textContent="Tap a word, then tap its matching picture.";
+ $("bar").style.width=(index/deck.length*100)+"%";
+ matchSet=deck.slice(index,index+4);
+ matched=new Set();
+ const left=shuffle(matchSet),right=shuffle(matchSet);
+ $("answerArea").innerHTML='<div id="matches"><div class="matchcol" id="wordCol"></div><div class="matchcol" id="picCol"></div></div>';
+ $("wordCol").innerHTML=left.map(w=>'<button class="matchword" data-word="'+escapeHTML(w.word)+'" onclick="selectWord(this)">'+escapeHTML(w.word)+'</button>').join("");
+ $("picCol").innerHTML=right.map(w=>'<button class="matchpic" data-word="'+escapeHTML(w.word)+'" onclick="selectPic(this)">'+art(w.type)+'<span>?</span></button>').join("");
+}
+function selectWord(btn){
+ if(locked||btn.classList.contains("done"))return;
+ document.querySelectorAll(".matchword").forEach(b=>b.classList.remove("selected"));
+ btn.classList.add("selected");selected=btn.dataset.word;
+ $("feedback").textContent="Now tap the matching picture.";
+ $("feedback").style.color="#3869c7";
+}
+function selectPic(btn){
+ if(locked||btn.classList.contains("done"))return;
+ if(!selected){$("feedback").textContent="Choose a word first.";return}
+ if(selected===btn.dataset.word){
+  btn.classList.add("done");btn.querySelector("span").textContent=selected;
+  const wb=[...document.querySelectorAll(".matchword")].find(b=>b.dataset.word===selected);
+  if(wb)wb.classList.add("done");
+  matched.add(selected);selected=null;
+  document.querySelectorAll(".matchword").forEach(b=>b.classList.remove("selected"));
+  $("feedback").textContent="Great match! ✓";$("feedback").style.color="#15975b";tone(true);
+  if(matched.size===matchSet.length){
+   locked=true;
+   $("feedback").textContent="Excellent! All matched!";
+   timer=setTimeout(()=>{index+=matchSet.length;nextQuestion()},800);
+  }
+ }else{
+  $("feedback").textContent="Try another picture!";
+  $("feedback").style.color="#d64a4a";tone(false);
+  if(!window.matchWrong)window.matchWrong=0;
+  window.matchWrong++;
+  if(window.matchWrong%3===0)loseLife();
+ }
+}
+function endGame(){clearTimeout(timer);screen("end")}
+function winGame(){
+ clearTimeout(timer);
+ $("winText").textContent="Amazing work, "+playerName+"!";
+ screen("win");
+}
+function resetGame(){
+ clearTimeout(timer);
+ if("speechSynthesis" in window)speechSynthesis.cancel();
+ window.matchWrong=0;
+ lives=5;stageIndex=0;index=0;
+ $("lives").textContent="❤️❤️❤️❤️❤️";
+ screen("start");
+}
+$("cover").innerHTML=art("school bus".replace("school bus","bus"));
+</script>
+</body>
+</html>
