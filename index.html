@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>First Friends 2 - Spelling Adventure</title>
+
+<style>
+*{box-sizing:border-box}
+:root{
+  --purple:#7162df;
+  --pink:#ff83b5;
+  --yellow:#ffd34f;
+  --blue:#69cef2;
+  --green:#6cdbad;
+  --ink:#30365f;
+}
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:"Trebuchet MS",Arial,sans-serif;
+  color:var(--ink);
+  text-align:center;
+  background:
+    radial-gradient(circle at 10% 10%,#ffe0ef,transparent 30%),
+    radial-gradient(circle at 90% 15%,#d8f6ff,transparent 30%),
+    linear-gradient(135deg,#faf5ff,#eefaff);
+}
+button,input{font:inherit}
+button{
+  border:0;
+  cursor:pointer;
+  touch-action:manipulation;
+  transition:.2s;
+}
+button:hover{transform:translateY(-2px)}
+button:disabled{opacity:.5;cursor:default}
+.screen{
+  display:none;
+  min-height:100vh;
+  padding:18px;
+  align-items:center;
+  justify-content:center;
+}
+.screen.active{display:flex}
+.panel{
+  width:min(760px,100%);
+  padding:clamp(18px,4vw,32px);
+  background:#ffffffed;
+  border:4px solid white;
+  border-radius:32px;
+  box-shadow:0 12px 0 #55509b15,0 20px 45px #55509b20;
+  overflow:hidden;
+}
+.brand{
+  display:inline-block;
+  padding:8px 14px;
+  border-radius:30px;
+  background:#efebff;
+  color:#6355c8;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:1px;
+}
+h1{
+  color:#6255cf;
+  font-size:clamp(35px,8vw,58px);
+  line-height:1.05;
+  margin:15px 0;
+}
+h2{color:#6155c8}
+.subtitle{
+  color:#77809f;
+  line-height:1.6;
+  max-width:440px;
+  margin:12px auto 22px;
+}
+.hero{
+  width:150px;
+  height:150px;
+  margin:20px auto;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(145deg,#fff2a9,#ffd45a);
+  border:6px solid white;
+  border-radius:38%;
+  box-shadow:0 7px 0 #edbf40;
+  animation:bob 2s ease-in-out infinite;
+}
+.hero svg{width:100%;height:100%}
+@keyframes bob{
+  0%,100%{transform:translateY(0) rotate(-4deg)}
+  50%{transform:translateY(-8px) rotate(4deg)}
+}
+.btn{
+  padding:13px 20px;
+  min-height:46px;
+  border-radius:15px;
+  font-weight:900;
+  margin:4px;
+}
+.primary{
+  color:#594300;
+  background:linear-gradient(#ffe47c,#ffc83f);
+  box-shadow:0 5px 0 #e8ae2c;
+}
+.secondary{
+  color:#554bb6;
+  background:#efedff;
+  box-shadow:0 4px 0 #d7d2ff;
+}
+input{
+  display:block;
+  width:min(390px,100%);
+  min-height:50px;
+  padding:12px;
+  margin:14px auto;
+  border:2px solid #e0e2fb;
+  border-radius:15px;
+  text-align:center;
+  color:var(--ink);
+  background:#fbfcff;
+  font-size:17px;
+}
+.topline{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-bottom:15px;
+}
+.chip{
+  padding:9px 12px;
+  border-radius:14px;
+  font-weight:900;
+  font-size:14px;
+  background:#f0edff;
+  color:#6155c8;
+}
+#roundChip{background:#e4f6ff;color:#347ba7}
+#scoreChip{background:#fff0f5;color:#ce5280}
+.progress{
+  height:13px;
+  background:#eceeff;
+  border-radius:30px;
+  overflow:hidden;
+  margin-bottom:18px;
+}
+#bar{
+  width:0;
+  height:100%;
+  background:linear-gradient(90deg,#6cdbad,#62c5f4);
+  transition:width .3s;
+}
+.tag{
+  display:inline-block;
+  padding:7px 12px;
+  border-radius:30px;
+  background:#fff3c9;
+  color:#87661b;
+  font-weight:900;
+  font-size:12px;
+}
+#title{color:#6155c8;margin:12px 0;font-size:clamp(20px,4vw,27px)}
+#art{
+  width:min(270px,75vw);
+  height:200px;
+  margin:10px auto;
+  display:grid;
+  place-items:center;
+}
+#art svg{width:100%;height:100%;overflow:visible}
+.word{
+  font-size:clamp(22px,5vw,32px);
+  font-weight:1000;
+  color:#4e50b0;
+  letter-spacing:2px;
+  margin:10px;
+}
+.choices{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  max-width:480px;
+  margin:15px auto;
+}
+.choice{
+  padding:13px;
+  min-height:52px;
+  border:2px solid #e5e5ff;
+  border-radius:15px;
+  background:white;
+  color:#424875;
+  font-weight:900;
+  box-shadow:0 4px 0 #e9e9fb;
+}
+.choice.selected{background:#fff5c9;border-color:#ffc83f}
+.letters{
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:7px;
+  margin:15px auto;
+}
+.letter{
+  width:43px;
+  height:45px;
+  border-radius:12px;
+  background:#ffe17a;
+  color:#5d4a0a;
+  font-size:19px;
+  font-weight:1000;
+  box-shadow:0 4px 0 #e6ba38;
+}
+.letter.used{opacity:.3;transform:scale(.9)}
+.slots{
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:5px;
+  min-height:45px;
+  margin:12px auto;
+}
+.slot{
+  width:35px;
+  height:42px;
+  border-bottom:4px solid #aaa4e9;
+  display:grid;
+  place-items:center;
+  font-size:22px;
+  font-weight:900;
+  text-transform:lowercase;
+}
+.feedback{
+  min-height:28px;
+  margin:12px 0;
+  font-weight:900;
+  color:#5c55bc;
+}
+.good{color:#239966}
+.bad{color:#d54d79}
+.actions{
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:5px;
+}
+.matchgrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  max-width:550px;
+  margin:12px auto;
+}
+.matchcol{display:grid;gap:8px}
+.matchpic,.matchword{
+  min-height:76px;
+  border:2px solid #e5e5ff;
+  border-radius:14px;
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:6px;
+  font-weight:900;
+  color:#514bb2;
+}
+.matchpic svg{width:58px;height:58px}
+.matchpic.selected{background:#fff5c9;border-color:#ffc83f}
+.matchpic.matched,.matchword.matched{
+  background:#e2fff0;
+  border-color:#80dcb0;
+}
+.stars{
+  color:#ffbd2f;
+  font-size:26px;
+  animation:twinkle 1s infinite alternate;
+}
+@keyframes twinkle{to{transform:scale(1.08);opacity:.7}}
+.footer{font-size:12px;color:#9aa3bd;margin-top:22px}
+[hidden]{display:none!important}
+@media(max-width:440px){
+  .panel{padding:17px 12px}
+  .topline{justify-content:center}
+  .chip{font-size:12px}
+  #art{height:170px}
+  .matchpic svg{width:48px;height:48px}
+  .matchpic,.matchword{min-height:65px;font-size:13px}
+  .letter{width:38px;height:41px}
+  .slot{width:29px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+
+<body>
+
+<!-- START SCREEN -->
+<section id="home" class="screen active">
+  <div class="panel">
+    <span class="brand">FIRST FRIENDS 2</span>
+    <h1>Spelling<br>Adventure!</h1>
+    <div class="hero" id="mascot"></div>
+    <p class="subtitle">
+      Listen, look, spell and match!<br>
+      Let's learn English and collect stars!
+    </p>
+    <input id="playerName" maxlength="20"
+      placeholder="What's your name? (optional)">
+    <button class="btn primary" id="startBtn">LET'S PLAY! ▶</button>
+    <p class="footer">A magical spelling game for little learners ✨</p>
+  </div>
+</section>
+
+<!-- GAME SCREEN -->
+<section id="game" class="screen">
+  <div class="panel">
+    <div class="topline">
+      <div class="chip" id="playerChip">👋 Little learner</div>
+      <div class="chip" id="roundChip">ROUND 1 / 4</div>
+      <div class="chip" id="scoreChip">⭐ <span id="score">0</span></div>
+    </div>
+
+    <div class="progress"><div id="bar"></div></div>
+    <span class="tag" id="tag">LISTEN & SPELL</span>
+    <h2 id="title">What word do you hear?</h2>
+
+    <div id="art"></div>
+    <div class="word" id="word"></div>
+    <div id="task"></div>
+    <div id="feedback" class="feedback" aria-live="polite"></div>
+
+    <div class="actions">
+      <button class="btn secondary" id="soundBtn">🔊 Hear it</button>
+      <button class="btn secondary" id="hintBtn">💡 Hint</button>
+      <button class="btn primary" id="checkBtn">CHECK ✓</button>
+      <button class="btn primary" id="nextBtn" hidden>NEXT ➜</button>
+    </div>
+  </div>
+</section>
+
+<!-- FINISH SCREEN -->
+<section id="finish" class="screen">
+  <div class="panel">
+    <span class="brand">ADVENTURE COMPLETE!</span>
+    <div class="hero" id="finishMascot"></div>
+    <div class="stars">★ ★ ★</div>
+    <h1>Great Job!</h1>
+    <h2 id="finishName">Amazing work!</h2>
+    <p class="subtitle" id="finishText"></p>
+    <button class="btn primary" id="againBtn">PLAY AGAIN ↻</button>
+  </div>
+</section>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const words = [
+  "Monday","Tuesday","Wednesday","Thursday","Friday",
+  "Saturday","Sunday","classroom","music room","teacher",
+  "friend","school bus","playground","seesaw","swing",
+  "sandbox","piano","guitar","happy","sad","tired","shy",
+  "hungry","scared","thirsty","hot","sleepy","cold",
+  "sheep","shoes","fish","ship","shelf","read","write",
+  "throw","run","catch","sing","kick","jump","draw",
+  "climb","bath","thumb","thick","thin"
+];
+
+const emoji = {
+  "Monday":"📅","Tuesday":"📅","Wednesday":"📅",
+  "Thursday":"📅","Friday":"📅","Saturday":"📅","Sunday":"📅",
+  "classroom":"🏫","music room":"🎼","teacher":"👩‍🏫",
+  "friend":"🧒","school bus":"🚌","playground":"🛝",
+  "seesaw":"⚖️","swing":"🎠","sandbox":"🏖️",
+  "piano":"🎹","guitar":"🎸","happy":"😄","sad":"😢",
+  "tired":"🥱","shy":"😊","hungry":"😋","scared":"😨",
+  "thirsty":"🥤","hot":"🥵","sleepy":"😴","cold":"🥶",
+  "sheep":"🐑","shoes":"👟","fish":"🐠","ship":"🚢",
+  "shelf":"🗄️","read":"📚","write":"✏️","throw":"⚾",
+  "run":"🏃","catch":"🥎","sing":"🎤","kick":"⚽",
+  "jump":"🤸","draw":"🖍️","climb":"🧗","bath":"🛁",
+  "thumb":"👍","thick":"📕","thin":"📏"
+};
+
+let player = "Little learner";
+let score = 0;
+let stage = 0;
+let question = 0;
+let current = "";
+let answer = "";
+let missingIndex = 0;
+let selected = [];
+let locked = false;
+let chosenPicture = null;
+let matched = new Set();
+let questionWords = [];
+
+const stageNames = [
+  ["LISTEN & SPELL","What word do you hear?"],
+  ["COMPLETE THE WORD","Choose the missing letter!"],
+  ["LOOK & SPELL","Look at the picture and spell it!"],
+  ["MATCH PICTURES","Match each picture to its word!"]
+];
+
+/* Animated SVG mascot */
+function mascotSVG(){
+  return `
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+    <g class="starbody" transform-origin="90px 90px">
+      <path d="M90 13 L111 56 L158 63 L124 96
+      L132 143 L90 120 L48 143 L56 96
+      L22 63 L69 56Z"
+      fill="#ffd34f" stroke="#f0ad26" stroke-width="5"
+      stroke-linejoin="round"/>
+      <ellipse cx="76" cy="79" rx="5" ry="8" fill="#493e75"/>
+      <ellipse cx="104" cy="79" rx="5" ry="8" fill="#493e75"/>
+      <ellipse cx="62" cy="92" rx="8" ry="5" fill="#ff9bb7"/>
+      <ellipse cx="118" cy="92" rx="8" ry="5" fill="#ff9bb7"/>
+      <path d="M76 94 Q90 109 104 94" fill="none"
+        stroke="#bd5b55" stroke-width="4" stroke-linecap="round"/>
+    </g>
+    <path d="M20 25l5 10 10 2-8 7 2 10-9-5-9 5 2-10-8-7 11-2z"
+      fill="#7ddcff"/>
+    <path d="M150 25l4 8 9 1-6 6 1 9-8-4-8 4 2-9-7-6 9-1z"
+      fill="#ff91bd"/>
+  </svg>`;
+}
+
+/* Cartoon picture cards with floating animation */
+function picture(word,small=false){
+  const face = emoji[word] || "⭐";
+  const backgrounds = {
+    happy:"#fff0a8", sad:"#dff2ff",
+    "school bus":"#fff0a3", sheep:"#f4eaff",
+    fish:"#dff8ff", guitar:"#ffebd7",
+    piano:"#eceaff", friend:"#ffe5ef"
+  };
+  const bg = backgrounds[word] || "#e8f8ff";
+  const id = "bg" + Math.random().toString(36).slice(2,9);
+
+  return `
+  <svg xmlns="http://www.w3.org/2000/svg"
+       viewBox="0 0 240 200" role="img"
+       aria-label="${word} cartoon">
+    <defs>
+      <linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="${bg}"/>
+        <stop offset="1" stop-color="#ffffff"/>
+      </linearGradient>
+    </defs>
+    <ellipse cx="120" cy="178" rx="66" ry="9" fill="#d5e9ed"/>
+    <circle cx="38" cy="39" r="14" fill="#fff1a5"/>
+    <path d="M38 28v22M27 39h22" stroke="#ffc743"
+      stroke-width="3" stroke-linecap="round"/>
+    <circle cx="202" cy="47" r="10" fill="#ffd8e8"/>
+    <path d="M202 40v14M195 47h14" stroke="#ff80b3"
+      stroke-width="3" stroke-linecap="round"/>
+    <rect x="28" y="18" width="184" height="155" rx="38"
+      fill="url(#${id})" stroke="#fff" stroke-width="5"/>
+    <g class="floaty">
+      <text x="120" y="${small?113:128}" text-anchor="middle"
+        font-size="${small?82:100}"
+        style="font-family:'Apple Color Emoji','Segoe UI Emoji',sans-serif">
+        ${face}
+      </text>
+    </g>
+    <path d="M70 150 Q120 164 170 150" fill="none"
+      stroke="#8bdab5" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="180" cy="130" r="5" fill="#ffcf45"/>
+    <circle cx="60" cy="125" r="4" fill="#ff9dbf"/>
+  </svg>`;
+}
+
+function speak(word=current){
+  if(!("speechSynthesis" in window)){
+    say("Sound is not available in this browser.");
+    return;
+  }
+  speechSynthesis.cancel();
+  const voice = new SpeechSynthesisUtterance(word);
+  voice.lang = "en-US";
+  voice.rate = .78;
+  voice.pitch = 1.12;
+  speechSynthesis.speak(voice);
+}
+
+function shuffle(list){
+  return [...list].sort(()=>Math.random()-.5);
+}
+
+function say(message,kind=""){
+  $("feedback").textContent = message;
+  $("feedback").className = "feedback " + kind;
+}
+
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(el=>{
+    el.classList.remove("active");
+  });
+  $(id).classList.add("active");
+  window.scrollTo(0,0);
+}
+
+function startGame(){
+  player = $("playerName").value.trim() || "Little learner";
+  score = 0;
+  stage = 0;
+  question = 0;
+  questionWords = shuffle(words);
+  $("score").textContent = score;
+  $("playerChip").textContent = "👋 " + player;
+  showScreen("game");
+  loadQuestion();
+}
+
+function chooseWord(){
+  current = questionWords[(stage*5 + question) % questionWords.length];
+}
+
+function loadQuestion(){
+  locked = false;
+  selected = [];
+  chosenPicture = null;
+  matched = new Set();
+
+  $("roundChip").textContent = "ROUND " + (stage+1) + " / 4";
+  $("tag").textContent = stageNames[stage][0];
+  $("title").textContent = stageNames[stage][1];
+  $("bar").style.width = ((stage*5+question)/20*100) + "%";
+
+  $("art").innerHTML = "";
+  $("word").textContent = "";
+  $("task").innerHTML = "";
+  $("checkBtn").hidden = false;
+  $("nextBtn").hidden = true;
+  $("hintBtn").disabled = false;
+  $("soundBtn").disabled = false;
+  say("");
+
+  if(stage===0) loadListen();
+  if(stage===1) loadComplete();
+  if(stage===2) loadSpell();
+  if(stage===3) loadMatch();
+}
+
+function loadListen(){
+  chooseWord();
+  $("art").innerHTML = picture("friend");
+  $("word").textContent = "🔊 Listen carefully";
+  $("task").innerHTML = `
+    <input id="answerInput" autocomplete="off"
+      autocapitalize="none" spellcheck="false"
+      placeholder="Type the word you hear">`;
+  $("soundBtn").onclick = ()=>speak(current);
+  $("hintBtn").onclick = ()=>say(
+    "Hint: the word has " + current.replace(/ /g,"").length + " letters."
+  );
+  setTimeout(()=>speak(current),350);
+}
+
+function loadComplete(){
+  chooseWord();
+  $("art").innerHTML = picture(current);
+
+  const possible = [...current]
+    .map((c,i)=>c===" "?-1:i)
+    .filter(i=>i>=0);
+
+  missingIndex = possible[Math.floor(Math.random()*possible.length)];
+  const shown = current.slice(0,missingIndex) + "_" +
+                current.slice(missingIndex+1);
+
+  $("word").textContent = shown.toUpperCase();
+
+  const correctLetter = current[missingIndex].toLowerCase();
+  const options = shuffle([
+    correctLetter,
+    ...shuffle("abcdefghijklmnopqrstuvwxyz".split(""))
+      .filter(c=>c!==correctLetter).slice(0,3)
+  ]);
+
+  $("task").innerHTML = `
+    <div class="choices" id="choices">
+      ${options.map(letter=>`
+        <button class="choice" data-letter="${letter}">
+          ${letter.toUpperCase()}
+        </button>`).join("")}
+    </div>`;
+
+  $("task").dataset.answer = "";
+
+  $("choices").querySelectorAll("button").forEach(btn=>{
+    btn.onclick = ()=>{
+      if(locked) return;
+      $("choices").querySelectorAll("button")
+        .forEach(b=>b.classList.remove("selected"));
+      btn.classList.add("selected");
+      $("task").dataset.answer = btn.dataset.letter;
+    };
+  });
+
+  $("soundBtn").onclick = ()=>speak(current);
+  $("hintBtn").onclick = ()=>say(
+    "Find the letter " + correctLetter.toUpperCase() + "!"
+  );
+}
+
+function loadSpell(){
+  chooseWord();
+  $("art").innerHTML = picture(current);
+
+  const letters = shuffle(current.replace(/ /g,"").split(""));
+  selected = [];
+
+  $("task").innerHTML = `
+    <div class="slots" id="slots">
+      ${letters.map(()=>`<div class="slot"></div>`).join("")}
+    </div>
+    <div class="letters" id="letterBank">
+      ${letters.map((letter,index)=>`
+        <button class="letter" data-index="${index}">
+          ${letter.toUpperCase()}
+        </button>`).join("")}
+    </div>
+    <button class="btn secondary" id="clearBtn">↶ Clear letters</button>`;
+
+  $("letterBank").querySelectorAll("button").forEach(btn=>{
+    btn.onclick = ()=>{
+      if(locked || btn.classList.contains("used")) return;
+      if(selected.length >= letters.length) return;
+
+      const letter = letters[Number(btn.dataset.index)];
+      selected.push({letter,index:Number(btn.dataset.index)});
+      btn.classList.add("used");
+
+      const slot = $("slots").children[selected.length-1];
+      slot.textContent = letter.toUpperCase();
+    };
+  });
+
+  $("clearBtn").onclick = ()=>{
+    selected = [];
+    $("letterBank").querySelectorAll("button")
+      .forEach(b=>b.classList.remove("used"));
+    $("slots").querySelectorAll(".slot")
+      .forEach(s=>s.textContent="");
+    say("");
+  };
+
+  $("soundBtn").onclick = ()=>speak(current);
+  $("hintBtn").onclick = ()=>say(
+    "First letter: " + current[0].toUpperCase()
+  );
+}
+
+function loadMatch(){
+  const pool = shuffle(words).slice(0,4);
+  const pictures = shuffle(pool);
+  const labels = shuffle(pool);
+
+  $("art").innerHTML = mascotSVG();
+  $("word").textContent = "Find all four pairs!";
+
+  $("task").innerHTML = `
+    <div class="matchgrid">
+      <div class="matchcol" id="matchPictures">
+        ${pictures.map(word=>`
+          <button class="matchpic" data-word="${word}">
+            ${picture(word,true)}
+          </button>`).join("")}
+      </div>
+      <div class="matchcol" id="matchWords">
+        ${labels.map(word=>`
+          <button class="matchword" data-word="${word}">
+            ${word}
+          </button>`).join("")}
+      </div>
+    </div>`;
+
+  $("checkBtn").hidden = true;
+  $("soundBtn").onclick = ()=>speak(chosenPicture || pool[0]);
+  $("hintBtn").onclick = ()=>say("Choose a picture, then choose its word!");
+
+  $("matchPictures").querySelectorAll("button").forEach(btn=>{
+    btn.onclick = ()=>{
+      if(locked || btn.classList.contains("matched")) return;
+      chosenPicture = btn.dataset.word;
+
+      $("matchPictures").querySelectorAll("button")
+        .forEach(b=>b.classList.toggle("selected",b===btn));
+
+      say("Now choose the matching word!");
+    };
+  });
+
+  $("matchWords").querySelectorAll("button").forEach(btn=>{
+    btn.onclick = ()=>{
+      if(locked || btn.classList.contains("matched")) return;
+
+      if(!chosenPicture){
+        say("Choose a picture first!");
+        return;
+      }
+
+      if(chosenPicture === btn.dataset.word){
+        matched.add(chosenPicture);
+
+        $("matchPictures").querySelectorAll("button")
+          .forEach(b=>{
+            if(b.dataset.word===chosenPicture){
+              b.classList.add("matched");
+              b.disabled = true;
+            }
+          });
+
+        btn.classList.add("matched");
+        btn.disabled = true;
+
+        score += 10;
+        $("score").textContent = score;
+        say("Perfect match! ⭐","good");
+
+        chosenPicture = null;
+
+        if(matched.size===4){
+          locked = true;
+          $("nextBtn").hidden = false;
+          $("hintBtn").disabled = true;
+          say("You matched them all! Fantastic! 🎉","good");
+        }
+      }else{
+        say("Not this one. Try again! 💛","bad");
+        chosenPicture = null;
+        $("matchPictures").querySelectorAll("button")
+          .forEach(b=>b.classList.remove("selected"));
+      }
+    };
+  });
+}
+
+function checkAnswer(){
+  if(locked) return;
+  let correct = false;
+
+  if(stage===0){
+    const value = $("answerInput").value.trim()
+      .toLowerCase().replace(/\s+/g," ");
+    correct = value === current.toLowerCase();
+  }
+
+  if(stage===1){
+    correct = $("task").dataset.answer ===
+      current[missingIndex].toLowerCase();
+  }
+
+  if(stage===2){
+    const value = selected.map(item=>item.letter).join("");
+    correct = value.toLowerCase() === current.replace(/ /g,"").toLowerCase();
+  }
+
+  if(correct){
+    locked = true;
+    score += 10;
+    $("score").textContent = score;
+    say("Amazing! That's correct! ⭐","good");
+    $("checkBtn").hidden = true;
+    $("nextBtn").hidden = false;
+    $("hintBtn").disabled = true;
+
+    if(stage===0) speak(current);
+  }else{
+    say("Almost! Try again! 💛","bad");
+    if(stage===0) $("answerInput").focus();
+  }
+}
+
+function nextQuestion(){
+  if(stage===3){
+    finishGame();
+    return;
+  }
+
+  question++;
+
+  if(question>=5){
+    question=0;
+    stage++;
+  }
+
+  if(stage>=4){
+    finishGame();
+  }else{
+    loadQuestion();
+  }
+}
+
+function finishGame(){
+  $("finishMascot").innerHTML = mascotSVG();
+  $("finishName").textContent = "Well done, " + player + "!";
+  $("finishText").textContent =
+    "You earned " + score + " points. You're a spelling superstar!";
+  $("bar").style.width = "100%";
+  showScreen("finish");
+}
+
+$("startBtn").addEventListener("click",startGame);
+$("checkBtn").addEventListener("click",checkAnswer);
+$("nextBtn").addEventListener("click",nextQuestion);
+$("againBtn").addEventListener("click",()=>{
+  showScreen("home");
+});
+
+$("mascot").innerHTML = mascotSVG();
+$("finishMascot").innerHTML = mascotSVG();
+</script>
+
+<style>
+.floaty{
+  transform-origin:120px 100px;
+  animation:floaty 2.3s ease-in-out infinite;
+}
+.starbody{
+  transform-origin:90px 90px;
+  animation:starbounce 1.7s ease-in-out infinite;
+}
+@keyframes floaty{
+  0%,100%{transform:translateY(0) rotate(-2deg)}
+  50%{transform:translateY(-7px) rotate(2deg)}
+}
+@keyframes starbounce{
+  0%,100%{transform:rotate(-4deg) scale(1)}
+  50%{transform:rotate(5deg) scale(1.04)}
+}
+</style>
+
+</body>
+</html>
