@@ -1,0 +1,440 @@
+
+<!DOCTYPE html>
+<html lang="en" translate="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="google" content="notranslate">
+<title>First Friends 2 - Word Adventure</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:"Trebuchet MS",Arial,sans-serif;color:#30365f;background:linear-gradient(135deg,#d7f5ff,#fff1d1,#f5ddff)}
+.app{width:min(900px,94%);margin:auto;padding:18px 0 35px}
+header{text-align:center}
+.logo{font-size:45px}
+h1{color:#7955d9;font-size:clamp(28px,5vw,42px);margin:5px}
+.panel{background:#ffffffed;border:4px solid white;border-radius:26px;padding:clamp(16px,4vw,28px);box-shadow:0 12px 30px #63559b22;text-align:center}
+.hidden{display:none!important}
+button,input{font:inherit}
+button{cursor:pointer}
+.primary{border:0;border-radius:15px;padding:13px 22px;color:white;background:#7955d9;font-weight:bold;margin:7px;box-shadow:0 4px 0 #5132a6}
+.secondary{background:#edf7ff;color:#3f4c77;border:2px solid #cceaff;border-radius:13px;padding:10px 15px;margin:5px}
+.stats{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.stat{background:#eff8ff;border-radius:12px;padding:10px;font-weight:bold}
+#livesStat{background:#fff0f2;color:#b52c58}
+.stage-badge{display:inline-block;background:#fff0b9;padding:9px 15px;border-radius:30px;font-weight:bold;margin-top:14px}
+.progress{height:13px;background:#e9e7f5;border-radius:20px;overflow:hidden;margin:17px 0}
+#bar{height:100%;width:0;background:linear-gradient(90deg,#47d4a0,#62b7ff);transition:width .3s}
+h2{font-size:clamp(22px,4vw,30px)}
+.picture{height:190px;width:230px;max-width:100%;margin:15px auto;border:3px dashed #f3ca69;border-radius:23px;background:#fff8df;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.picture .emoji{font-size:82px}
+.picture img{width:100%;height:100%;object-fit:contain}
+.image-error{font-size:12px;color:#c43d58;padding:10px;overflow-wrap:anywhere}
+.answer{display:block;width:min(420px,100%);margin:12px auto;padding:13px;border:3px solid #c8b8ff;border-radius:14px;text-align:center;font-size:21px;outline:none;color:#30365f}
+.answer:focus{border-color:#7955d9}
+#feedback{min-height:30px;font-weight:bold;font-size:18px;margin:12px}
+.good{color:#138d59}.bad{color:#d94c62}
+.word-hint{font-size:27px;font-weight:bold;letter-spacing:4px;color:#7955d9;margin:20px 0;overflow-wrap:anywhere}
+.choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;max-width:600px;margin:15px auto}
+.choice{padding:12px 8px;border-radius:16px;border:3px solid #ded2ff;background:#f4efff;color:#543e91;font-size:18px;font-weight:bold;overflow-wrap:anywhere}
+.choice.correct{background:#d9f8e9;border-color:#45c58b}
+.choice.wrong{background:#ffe3e8;border-color:#f58da0}
+.stage-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;text-align:left;margin:22px auto;max-width:520px}
+.stage-item{padding:12px;background:#f5f0ff;border-radius:13px}
+.small{font-size:13px;color:#737b98}
+@media(max-width:480px){.picture{height:165px;width:190px}.picture .emoji{font-size:70px}.choice{font-size:16px}.stage-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+ <div class="logo">🦊</div>
+ <h1>Word Adventure!</h1>
+ <p>🌈 First Friends 2 · Let's learn and play!</p>
+ <p><b>Teacher: Ms.Ramezanzadeh</b></p>
+</header>
+
+<section id="home" class="panel">
+ <div style="font-size:52px">🎒✨📚</div>
+ <h2>Welcome, Little Explorer!</h2>
+ <p>Learn 47 words through four fun stages!</p>
+ <div class="stats">
+  <div class="stat">📚 47 Words</div>
+  <div class="stat">🎮 4 Stages</div>
+  <div class="stat">❤️ 5 Lives</div>
+ </div>
+ <label for="playerName"><b>What's your name?</b></label>
+ <input id="playerName" class="answer" maxlength="25" autocomplete="off" placeholder="Type your name here">
+ <p id="nameError" class="bad"></p>
+ <div class="stage-grid">
+  <div class="stage-item">🔊 <b>Stage 1</b><br>Listen & Spell · 12 words</div>
+  <div class="stage-item">🧩 <b>Stage 2</b><br>Complete the Word · 12 words</div>
+  <div class="stage-item">🎨 <b>Stage 3</b><br>Look & Spell · 12 words</div>
+  <div class="stage-item">🖼️ <b>Stage 4</b><br>Match Pictures · 11 words</div>
+ </div>
+ <button class="primary" onclick="startGame()">🚀 Start Playing!</button>
+ <p class="small">Turn up your sound for Stage 1.</p>
+</section>
+
+<section id="game" class="panel hidden">
+ <div class="stats">
+  <div class="stat" id="playerStat">Player</div>
+  <div class="stat" id="stageStat">Stage 1 / 4</div>
+  <div class="stat" id="questionStat">Question 1 / 12</div>
+  <div class="stat" id="scoreStat">⭐ 0</div>
+  <div class="stat" id="livesStat">❤️❤️❤️❤️❤️</div>
+ </div>
+ <div class="progress"><div id="bar"></div></div>
+ <div class="stage-badge" id="stageBadge"></div>
+ <h2 id="instruction"></h2>
+ <div id="picture" class="picture"></div>
+ <button id="listenButton" class="secondary hidden" onclick="speakCurrent()">🔊 Listen Again</button>
+ <div id="hint" class="word-hint"></div>
+ <div id="answerArea">
+  <input id="answer" class="answer" autocomplete="off" autocapitalize="none" placeholder="Type the word here">
+  <button class="primary" id="checkButton" onclick="checkAnswer()">Check ✓</button>
+ </div>
+ <div id="choices" class="choices hidden"></div>
+ <div id="feedback" aria-live="polite"></div>
+ <p class="small">Correct answers move you to the next question! ⭐</p>
+</section>
+
+<section id="finish" class="panel hidden">
+ <div style="font-size:64px" id="resultIcon">🏆</div>
+ <h2 id="finishTitle">Amazing Work!</h2>
+ <p id="finishDescription"></p>
+ <div class="stats">
+  <div class="stat" id="finalScore"></div>
+  <div class="stat" id="finalCorrect"></div>
+ </div>
+ <div class="stage-grid">
+  <div class="stage-item" id="result0"></div>
+  <div class="stage-item" id="result1"></div>
+  <div class="stage-item" id="result2"></div>
+  <div class="stage-item" id="result3"></div>
+ </div>
+ <p id="finalMessage"></p>
+ <button class="primary" onclick="startGame()">🔄 Play Again</button>
+</section>
+</div>
+
+<script>
+const originalGroups = [
+[
+{word:"Sunday",emoji:"☀️"},{word:"Monday",emoji:"📅"},
+{word:"Tuesday",emoji:"🗓️"},{word:"Wednesday",emoji:"📆"},
+{word:"Thursday",emoji:"📅"},{word:"Friday",emoji:"🎉"},
+{word:"Saturday",emoji:"🌈"},{word:"classroom",emoji:"🏫"},
+{word:"music room",emoji:"🎼"},{word:"piano",emoji:"🎹"},
+{word:"guitar",emoji:"🎸"},{word:"friend",emoji:"🧒"}
+],
+[
+{word:"playground",emoji:"🛝"},{word:"school bus",emoji:"🚌"},
+{word:"seesaw",emoji:"⚖️"},{word:"swing",emoji:"🎠"},
+{word:"sandbox",emoji:"🏖️"},{word:"teacher",emoji:"👩‍🏫"},
+{word:"cold",emoji:"🥶"},{word:"sad",emoji:"😢"},
+{word:"happy",emoji:"😄"},{word:"tired",emoji:"🥱"},
+{word:"shy",emoji:"😊"},{word:"hungry",emoji:"😋"}
+],
+[
+{word:"scared",emoji:"😨"},{word:"thirsty",emoji:"🥤"},
+{word:"hot",emoji:"🥵"},{word:"sleepy",emoji:"😴"},
+{word:"sheep",emoji:"🐑"},{word:"shoes",emoji:"👟"},
+{word:"fish",emoji:"🐠"},{word:"ship",emoji:"🚢"},
+{word:"shelf",emoji:"🗄️"},{word:"read",emoji:"📖"},
+{word:"write",emoji:"✍️"},{word:"throw",emoji:"🤾"}
+],
+[
+{word:"run",emoji:"🏃"},{word:"catch",emoji:"🥎"},
+{word:"sing",emoji:"🎤"},{word:"kick",emoji:"⚽"},
+{word:"jump",emoji:"🤸"},{word:"draw",emoji:"🖍️"},
+{word:"climb",emoji:"🧗"},{word:"thumb",emoji:"👍"},
+{word:"bath",emoji:"🛁"},{word:"thick",emoji:"📚"},
+{word:"thin",emoji:"📄"}
+]
+];
+
+const imageFiles = {
+ "throw":"images/throw.png",
+ "kick":"images/kick.png",
+ "catch":"images/catch.png",
+ "thirsty":"images/thirsty.png",
+ "hungry":"images/hungry.png"
+};
+
+const stageTitles = [
+ "🔊 Listen & Spell",
+ "🧩 Complete the Word",
+ "🎨 Look & Spell",
+ "🖼️ Match Pictures"
+];
+const stageInstructions = [
+ "Listen to the word and spell it.",
+ "Look at the missing letters and complete the word.",
+ "Look at the picture and type the word.",
+ "Choose the word that matches the picture."
+];
+
+// Weekdays can appear in earlier stages, but NEVER in Stage 4 options.
+const weekdays = new Set([
+ "sunday","monday","tuesday","wednesday","thursday","friday","saturday"
+]);
+
+let groups=[],stage=0,index=0,score=0,correctCount=0,lives=5;
+let stageCorrect=[0,0,0,0],current=null,locked=false,playerName="";
+let advanceTimer=null;
+
+function shuffle(array){
+ const a=[...array];
+ for(let i=a.length-1;i>0;i--){
+  const j=Math.floor(Math.random()*(i+1));
+  [a[i],a[j]]=[a[j],a[i]];
+ }
+ return a;
+}
+function allWords(){return groups.flat();}
+function startGame(){
+ const input=document.getElementById("playerName");
+ if(!input.value.trim()){
+  document.getElementById("nameError").textContent="Please enter your name first!";
+  input.focus();return;
+ }
+ playerName=input.value.trim();
+ document.getElementById("nameError").textContent="";
+ if(advanceTimer)clearTimeout(advanceTimer);
+ if("speechSynthesis" in window)window.speechSynthesis.cancel();
+ groups=originalGroups.map(g=>shuffle(g));
+ stage=0;index=0;score=0;correctCount=0;lives=5;
+ stageCorrect=[0,0,0,0];locked=false;
+ document.getElementById("home").classList.add("hidden");
+ document.getElementById("finish").classList.add("hidden");
+ document.getElementById("game").classList.remove("hidden");
+ loadQuestion();
+}
+function escapeHtml(s){
+ return String(s).replace(/[&<>"']/g,c=>({
+ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ })[c]);
+}
+
+// Clear visual comparisons: the target pencil is highlighted.
+function pencilSvg(target){
+ const thickSelected=target==="thick";
+ const thickStroke=thickSelected?"#f4a62a":"#b9c6d8";
+ const thinStroke=thickSelected?"#c5d0df":"#f4a62a";
+ const thickFill=thickSelected?"#ffcf59":"#dce5f0";
+ const thinFill=thickSelected?"#dce5f0":"#ffcf59";
+ const thickOpacity=thickSelected?"1":".55";
+ const thinOpacity=thickSelected?".55":"1";
+ return `<svg viewBox="0 0 230 180" width="100%" height="100%" role="img" aria-label="${target} pencil highlighted">
+ <rect width="230" height="180" rx="18" fill="#fff8df"/>
+ <text x="115" y="24" font-size="12" text-anchor="middle" fill="#59617c">LOOK CAREFULLY</text>
+ <g opacity="${thickOpacity}">
+  <rect x="45" y="48" width="45" height="105" rx="5" fill="${thickFill}" stroke="${thickStroke}" stroke-width="2"/>
+  <path d="M45 48 L67.5 30 L90 48Z" fill="#efc99b" stroke="${thickStroke}" stroke-width="2"/>
+  <path d="M62 35 L67.5 30 L73 35 L67.5 43Z" fill="#444b60"/>
+  <rect x="45" y="137" width="45" height="16" fill="#f29d9d"/>
+  <path d="M45 57 H90 M45 67 H90 M45 77 H90" stroke="#ffffff" stroke-width="2"/>
+ </g>
+ <g opacity="${thinOpacity}">
+  <rect x="145" y="48" width="15" height="105" rx="3" fill="${thinFill}" stroke="${thinStroke}" stroke-width="2"/>
+  <path d="M145 48 L152.5 30 L160 48Z" fill="#efc99b" stroke="${thinStroke}" stroke-width="2"/>
+  <path d="M149 38 L152.5 30 L156 38 L152.5 43Z" fill="#444b60"/>
+  <rect x="145" y="137" width="15" height="16" fill="#f29d9d"/>
+ </g>
+ <rect x="${thickSelected?35:135}" y="42" width="${thickSelected?65:35}" height="119" rx="10" fill="none" stroke="#49c995" stroke-width="4"/>
+ <path d="M25 165 H205" stroke="#c8d2e3" stroke-width="2"/>
+ </svg>`;
+}
+function swingSvg(){
+ return `<svg viewBox="0 0 200 175" width="100%" height="100%" aria-label="Swing">
+ <rect width="200" height="175" rx="20" fill="#fff4cf"/>
+ <circle cx="164" cy="25" r="14" fill="#ffd04f"/>
+ <path d="M0 148 Q45 130 90 148 T200 144 V175 H0Z" fill="#9fe39c"/>
+ <path d="M48 34 L79 143 M152 34 L121 143" stroke="#ed8d3e" stroke-width="10" stroke-linecap="round"/>
+ <path d="M48 34 H152" stroke="#ed8d3e" stroke-width="11" stroke-linecap="round"/>
+ <path d="M82 38 V111 M118 38 V111" stroke="#438fe8" stroke-width="4"/>
+ <path d="M72 111 Q100 122 128 111 L123 125 Q100 135 77 125Z" fill="#3288ef"/>
+ </svg>`;
+}
+function pictureHtml(item){
+ if(item.word==="thick"||item.word==="thin")return pencilSvg(item.word);
+ if(imageFiles[item.word]){
+  const path=imageFiles[item.word],word=escapeHtml(item.word);
+  return `<img src="${path}" alt="${word}" onerror="showImageError(this,'${word}','${path}')">`;
+ }
+ if(item.word==="swing")return swingSvg();
+ return `<span class="emoji" role="img" aria-label="${escapeHtml(item.word)}">${item.emoji}</span>`;
+}
+function showImageError(img,word,path){
+ const msg=document.createElement("div");
+ msg.className="image-error";
+ msg.textContent=`Image not found for ${word}. Check: ${path}`;
+ img.replaceWith(msg);
+}
+function setPicture(item){
+ document.getElementById("picture").innerHTML=pictureHtml(item);
+}
+function maskedWord(word){
+ const letters=[...word],positions=[];
+ letters.forEach((c,i)=>{if(/[a-z]/i.test(c))positions.push(i)});
+ const count=Math.max(1,Math.ceil(positions.length*.35));
+ shuffle(positions).slice(0,count).forEach(i=>letters[i]="_");
+ return letters.join(" ");
+}
+function loadQuestion(){
+ if(lives<=0){gameOver();return}
+ current=groups[stage][index];locked=false;
+ document.getElementById("playerStat").textContent="👤 "+playerName;
+ document.getElementById("stageStat").textContent=`Stage ${stage+1} / 4`;
+ document.getElementById("questionStat").textContent=`Question ${index+1} / ${groups[stage].length}`;
+ document.getElementById("scoreStat").textContent=`⭐ ${score}`;
+ document.getElementById("livesStat").textContent="❤️".repeat(lives)+"🤍".repeat(5-lives);
+ document.getElementById("stageBadge").textContent=stageTitles[stage];
+ document.getElementById("instruction").textContent=stageInstructions[stage];
+ document.getElementById("bar").style.width=((stage+index/groups[stage].length)/4*100)+"%";
+ const feedback=document.getElementById("feedback");
+ feedback.textContent="";feedback.className="";
+ document.getElementById("answer").value="";
+ document.getElementById("answer").disabled=false;
+ document.getElementById("checkButton").disabled=false;
+ document.getElementById("hint").textContent="";
+ document.getElementById("choices").innerHTML="";
+ document.getElementById("choices").classList.add("hidden");
+ document.getElementById("answerArea").classList.remove("hidden");
+ document.getElementById("listenButton").classList.add("hidden");
+ setPicture(current);
+ if(stage===0){
+  document.getElementById("hint").textContent="🔊 Listen carefully!";
+  document.getElementById("listenButton").classList.remove("hidden");
+  speakCurrent();
+ }else if(stage===1){
+  document.getElementById("hint").textContent=maskedWord(current.word);
+ }else if(stage===2){
+  document.getElementById("hint").textContent="Spell the word you see!";
+ }else{
+  document.getElementById("answerArea").classList.add("hidden");
+  showChoices();
+ }
+}
+function speakCurrent(){
+ if(!current)return;
+ if(!("speechSynthesis" in window)){
+  document.getElementById("feedback").textContent="Audio is not available. Try spelling the word!";
+  return;
+ }
+ window.speechSynthesis.cancel();
+ const u=new SpeechSynthesisUtterance(current.word);
+ u.lang="en-GB";u.rate=.8;window.speechSynthesis.speak(u);
+}
+function showChoices(){
+ const box=document.getElementById("choices");
+ // Exclude all days of the week from the final-stage answer options.
+ const pool=allWords().filter(w=>w.word!==current.word&&!weekdays.has(w.word.toLowerCase()));
+ const choices=shuffle([current,...shuffle(pool).slice(0,3)]);
+ box.classList.remove("hidden");
+ choices.forEach(item=>{
+  const btn=document.createElement("button");
+  btn.className="choice";btn.textContent=item.word;
+  btn.onclick=()=>checkChoice(item.word,btn);
+  box.appendChild(btn);
+ });
+}
+function loseLife(){
+ lives--;
+ document.getElementById("livesStat").textContent="❤️".repeat(lives)+"🤍".repeat(5-lives);
+ if(lives<=0){gameOver();return true}
+ return false;
+}
+function wrongAnswer(message){
+ if(locked)return;
+ const feedback=document.getElementById("feedback");
+ feedback.textContent=message;feedback.className="bad";
+ loseLife();
+}
+function correctAnswer(){
+ if(locked)return;
+ locked=true;score++;correctCount++;stageCorrect[stage]++;
+ document.getElementById("scoreStat").textContent=`⭐ ${score}`;
+ const feedback=document.getElementById("feedback");
+ feedback.textContent="🌟 Excellent! Correct!";feedback.className="good";
+ document.getElementById("answer").disabled=true;
+ document.getElementById("checkButton").disabled=true;
+ document.querySelectorAll(".choice").forEach(b=>{
+  b.disabled=true;
+  if(b.textContent===current.word)b.classList.add("correct");
+ });
+ advanceTimer=setTimeout(nextQuestion,850);
+}
+function checkChoice(chosen,button){
+ if(locked)return;
+ if(chosen===current.word)correctAnswer();
+ else{
+  button.classList.add("wrong");button.disabled=true;
+  wrongAnswer("Try again! One life lost. ❤️");
+ }
+}
+function checkAnswer(){
+ if(locked)return;
+ const typed=document.getElementById("answer").value.trim().toLowerCase();
+ if(!typed){
+  const f=document.getElementById("feedback");
+  f.textContent="Type your answer first! ✏️";f.className="bad";return;
+ }
+ if(typed===current.word.toLowerCase())correctAnswer();
+ else{
+  document.getElementById("answer").select();
+  wrongAnswer("Not quite! Try again. One life lost. ❤️");
+ }
+}
+function nextQuestion(){
+ if(advanceTimer)clearTimeout(advanceTimer);
+ advanceTimer=null;
+ if(lives<=0){gameOver();return}
+ index++;
+ if(index>=groups[stage].length){
+  stage++;index=0;
+  if(stage>=4){finishGame();return}
+ }
+ loadQuestion();
+}
+function showResults(){
+ document.getElementById("finalScore").textContent=`⭐ Score: ${score} / 47`;
+ document.getElementById("finalCorrect").textContent=`✅ Correct answers: ${correctCount} / 47`;
+ stageCorrect.forEach((n,i)=>{
+  document.getElementById("result"+i).textContent=`Stage ${i+1}: ${n} / ${groups[i].length} correct`;
+ });
+}
+function gameOver(){
+ if(advanceTimer)clearTimeout(advanceTimer);
+ advanceTimer=null;locked=true;
+ if("speechSynthesis" in window)window.speechSynthesis.cancel();
+ document.getElementById("game").classList.add("hidden");
+ document.getElementById("finish").classList.remove("hidden");
+ document.getElementById("resultIcon").textContent="💔";
+ document.getElementById("finishTitle").textContent="Game Over!";
+ document.getElementById("finishDescription").textContent=`Good try, ${playerName}! You used all five lives.`;
+ showResults();
+ document.getElementById("finalMessage").textContent="💪 Keep practising and try again!";
+}
+function finishGame(){
+ if("speechSynthesis" in window)window.speechSynthesis.cancel();
+ document.getElementById("game").classList.add("hidden");
+ document.getElementById("finish").classList.remove("hidden");
+ document.getElementById("resultIcon").textContent="🏆";
+ document.getElementById("finishTitle").textContent=`You Won, ${playerName}!`;
+ document.getElementById("finishDescription").textContent="You completed all 47 words and still had at least one life!";
+ document.getElementById("bar").style.width="100%";
+ showResults();
+ document.getElementById("finalMessage").textContent="🌈 Wonderful! You are a Word Adventure superstar!";
+}
+document.getElementById("answer").addEventListener("keydown",e=>{
+ if(e.key==="Enter"&&!locked&&stage!==3)checkAnswer();
+});
+document.getElementById("playerName").addEventListener("keydown",e=>{
+ if(e.key==="Enter")startGame();
+});
+console.assert(originalGroups.flat().length===47,"Expected 47 words.");
+</script>
+</body>
+</html>
